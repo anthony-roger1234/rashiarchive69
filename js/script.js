@@ -1,4 +1,6 @@
-const correctPassword = "1234"; // CHANGE THIS
+const correctPassword = "1234"; // change this
+const cardsPerPage = 50;
+let currentPage = 1;
 
 document.addEventListener("DOMContentLoaded", loadGallery);
 
@@ -20,14 +22,18 @@ function uploadFile() {
   const reader = new FileReader();
   reader.onload = function(e) {
     const fileData = {
-      name: removeExtension(file.name), // remove .jpg etc
+      name: removeExtension(file.name),
       type: file.type,
       data: e.target.result,
       link: ""
     };
 
-    saveToLocalStorage(fileData);
-    addCard(fileData);
+    let files = getFiles();
+    files.push(fileData);
+    localStorage.setItem("files", JSON.stringify(files));
+
+    currentPage = Math.ceil(files.length / cardsPerPage);
+    renderPage();
     fileInput.value = "";
   };
 
@@ -38,15 +44,27 @@ function removeExtension(filename) {
   return filename.replace(/\.[^/.]+$/, "");
 }
 
-function saveToLocalStorage(fileData) {
-  let files = JSON.parse(localStorage.getItem("files")) || [];
-  files.push(fileData);
-  localStorage.setItem("files", JSON.stringify(files));
+function getFiles() {
+  return JSON.parse(localStorage.getItem("files")) || [];
 }
 
 function loadGallery() {
-  let files = JSON.parse(localStorage.getItem("files")) || [];
-  files.forEach(file => addCard(file));
+  renderPage();
+}
+
+function renderPage() {
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
+  let files = getFiles();
+
+  const start = (currentPage - 1) * cardsPerPage;
+  const end = start + cardsPerPage;
+  const pageFiles = files.slice(start, end);
+
+  pageFiles.forEach(file => addCard(file));
+
+  renderPagination(files.length);
 }
 
 function addCard(fileData) {
@@ -55,40 +73,34 @@ function addCard(fileData) {
   const card = document.createElement("div");
   card.className = "card";
 
-  // 🏷 Title (no extension)
   const title = document.createElement("div");
   title.className = "card-title";
   title.innerText = fileData.name;
   card.appendChild(title);
 
-  // Image Preview
   if (fileData.type.startsWith("image/")) {
     const img = document.createElement("img");
     img.src = fileData.data;
     card.appendChild(img);
   }
 
-  // 🔴 View Button
   const viewBtn = document.createElement("button");
   viewBtn.innerText = "View";
   viewBtn.className = "view-btn";
-
   viewBtn.onclick = function() {
     if (fileData.link) {
       window.open(fileData.link, "_blank");
     } else {
-      alert("No link set for this file.");
+      alert("No link set.");
     }
   };
 
-  // 🔗 Custom Link Input (locked by default)
   const linkInput = document.createElement("input");
   linkInput.className = "link-input";
   linkInput.placeholder = "Custom link (password required)";
   linkInput.value = fileData.link;
   linkInput.disabled = true;
 
-  // Unlock only with password
   linkInput.addEventListener("click", function() {
     const password = prompt("Enter password to edit link:");
     if (password === correctPassword) {
@@ -99,10 +111,8 @@ function addCard(fileData) {
     }
   });
 
-  // Save link
   linkInput.addEventListener("change", function() {
-    fileData.link = linkInput.value;
-    updateLocalStorage();
+    updateLink(fileData, linkInput.value);
   });
 
   card.appendChild(viewBtn);
@@ -110,14 +120,50 @@ function addCard(fileData) {
   gallery.appendChild(card);
 }
 
-function updateLocalStorage() {
-  const cards = document.querySelectorAll(".card");
-  let files = JSON.parse(localStorage.getItem("files")) || [];
+function updateLink(fileData, newLink) {
+  let files = getFiles();
+  const index = files.findIndex(f => f.name === fileData.name && f.data === fileData.data);
+  if (index !== -1) {
+    files[index].link = newLink;
+    localStorage.setItem("files", JSON.stringify(files));
+  }
+}
 
-  cards.forEach((card, index) => {
-    const input = card.querySelector(".link-input");
-    files[index].link = input.value;
-  });
+function renderPagination(totalCards) {
+  let totalPages = Math.ceil(totalCards / cardsPerPage);
+  let pagination = document.querySelector(".pagination");
 
-  localStorage.setItem("files", JSON.stringify(files));
+  if (!pagination) {
+    pagination = document.createElement("div");
+    pagination.className = "pagination";
+    document.body.appendChild(pagination);
+  }
+
+  pagination.innerHTML = "";
+
+  if (currentPage > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.innerText = "Prev";
+    prevBtn.className = "page-btn";
+    prevBtn.onclick = function() {
+      currentPage--;
+      renderPage();
+    };
+    pagination.appendChild(prevBtn);
+  }
+
+  const pageInfo = document.createElement("span");
+  pageInfo.innerText = ` Page ${currentPage} of ${totalPages} `;
+  pagination.appendChild(pageInfo);
+
+  if (currentPage < totalPages) {
+    const nextBtn = document.createElement("button");
+    nextBtn.innerText = "Next";
+    nextBtn.className = "page-btn";
+    nextBtn.onclick = function() {
+      currentPage++;
+      renderPage();
+    };
+    pagination.appendChild(nextBtn);
+  }
 }
