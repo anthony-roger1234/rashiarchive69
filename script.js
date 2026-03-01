@@ -1,130 +1,213 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  background-color: #000;
-  color: white;
-  font-family: Arial, sans-serif;
-  min-height: 100vh;
+const correctPassword = "1234"; // CHANGE THIS
+const cardsPerPage = 50;
+let currentPage = 1;
+
+document.addEventListener("DOMContentLoaded", renderPage);
+
+// --- UPLOAD FILE ---
+function uploadFile() {
+  const password = document.getElementById("password").value;
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    alert("Select a file first.");
+    return;
+  }
+
+  if (password !== correctPassword) {
+    alert("Wrong password!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const fileData = {
+      name: removeExtension(file.name),
+      type: file.type,
+      data: e.target.result,
+      link: ""
+    };
+
+    let files = getFiles();
+    files.push(fileData);
+    localStorage.setItem("files", JSON.stringify(files));
+
+    currentPage = Math.ceil(files.length / cardsPerPage);
+    renderPage();
+    fileInput.value = "";
+  };
+
+  reader.readAsDataURL(file);
 }
 
-.main-title {
-  font-size: 42px;
-  margin-top: 20px;
-  letter-spacing: 3px;
-  text-align: center;
+function removeExtension(filename) {
+  return filename.replace(/\.[^/.]+$/, "");
 }
 
-.white { color: white; }
-.yellow { color: #ffd700; }
-
-.upload-section {
-  text-align: center;
-  margin: 20px 0;
+function getFiles() {
+  return JSON.parse(localStorage.getItem("files")) || [];
 }
 
-input {
-  padding: 6px;
-  margin: 5px;
-  border-radius: 4px;
-  border: none;
+// --- RENDER PAGE ---
+function renderPage() {
+  const gallery = document.getElementById("gallery");
+  gallery.innerHTML = "";
+
+  let files = getFiles();
+  const start = (currentPage - 1) * cardsPerPage;
+  const end = start + cardsPerPage;
+  const pageFiles = files.slice(start, end);
+
+  // real cards
+  pageFiles.forEach(file => addCard(file));
+
+  // fill empty cards
+  const remaining = cardsPerPage - pageFiles.length;
+  for (let i = 0; i < remaining; i++) {
+    const emptyCard = document.createElement("div");
+    emptyCard.className = "card empty-card";
+    gallery.appendChild(emptyCard);
+  }
+
+  renderPagination(files.length);
 }
 
-button {
-  padding: 6px 12px;
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
+// --- ADD CARD ---
+function addCard(fileData) {
+  const gallery = document.getElementById("gallery");
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  // TITLE
+  const title = document.createElement("div");
+  title.className = "card-title";
+  title.textContent = fileData.name;
+  card.appendChild(title);
+
+  // IMAGE
+  if (fileData.type.startsWith("image/")) {
+    const img = document.createElement("img");
+    img.src = fileData.data;
+    card.appendChild(img);
+  }
+
+  // LINK CONTAINER
+  const linkContainer = document.createElement("div");
+  linkContainer.style.marginTop = "8px";
+
+  // VIEW BUTTON
+  const viewBtn = document.createElement("button");
+  viewBtn.innerText = "View";
+  viewBtn.className = "view-btn";
+  viewBtn.onclick = function() {
+    linkContainer.innerHTML = "";
+
+    const enteredPassword = prompt("Enter password:");
+
+    if (enteredPassword === correctPassword) {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "link-input";
+      input.value = fileData.link;
+      input.placeholder = "Enter or edit link";
+
+      input.addEventListener("blur", function() {
+        fileData.link = input.value;
+        updateLink(fileData, input.value);
+      });
+
+      linkContainer.appendChild(input);
+    } else {
+      const text = document.createElement("div");
+      text.style.fontSize = "12px";
+      text.style.wordBreak = "break-word";
+      text.style.color = "#aaa";
+      text.textContent = fileData.link
+        ? fileData.link
+        : "No link set by owner.";
+      linkContainer.appendChild(text);
+    }
+  };
+
+  card.appendChild(viewBtn);
+  card.appendChild(linkContainer);
+
+  // DELETE BUTTON
+  const deleteBtn = document.createElement("button");
+  deleteBtn.innerText = "Delete";
+  deleteBtn.className = "delete-btn";
+
+  deleteBtn.onclick = function() {
+    const enteredPassword = prompt("Enter password to delete:");
+
+    if (enteredPassword === correctPassword) {
+      deleteCard(fileData);
+      renderPage();
+    } else {
+      alert("Wrong password! Cannot delete.");
+    }
+  };
+
+  card.appendChild(deleteBtn);
+
+  gallery.appendChild(card);
 }
 
-/* Responsive grid */
-.gallery {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 15px;
-  padding: 20px;
-}
-
-/* Card */
-.card {
-  background: #111;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
-  text-align: left;
-  min-height: 160px;
-}
-
-.card-title {
-  font-size: 12px;
-  font-weight: bold;
-  margin-bottom: 6px;
-  color: #ffd700;
-  word-break: break-word;
-}
-
-.card img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-.view-btn {
-  background: red;
-  color: white;
-  margin-top: 6px;
-  width: 100%;
-}
-
-.delete-btn {
-  background: #555;
-  color: white;
-  margin-top: 4px;
-  width: 100%;
-}
-
-.link-input {
-  width: 100%;
-  margin-top: 6px;
-  padding: 4px;
-  font-size: 11px;
-  border-radius: 4px;
-  border: none;
-}
-
-/* Empty placeholder */
-.empty-card {
-  background: #0a0a0a;
-  border: 1px dashed #222;
-  min-height: 160px;
-  opacity: 0.4;
-}
-
-/* Pagination */
-.pagination {
-  text-align: center;
-  margin: 20px 0 40px 0;
-}
-
-.page-btn {
-  background: #ffd700;
-  color: black;
-  margin: 5px;
-  font-weight: bold;
-}
-
-/* --- RESPONSIVE BREAKPOINTS --- */
-
-/* Tablet: 4 columns */
-@media screen and (max-width: 1024px) {
-  .gallery {
-    grid-template-columns: repeat(4, 1fr);
+// --- UPDATE LINK ---
+function updateLink(fileData, newLink) {
+  let files = getFiles();
+  const index = files.findIndex(f => f.data === fileData.data);
+  if (index !== -1) {
+    files[index].link = newLink;
+    localStorage.setItem("files", JSON.stringify(files));
   }
 }
 
-/* Mobile: 2 columns */
-@media screen and (max-width: 600px) {
-  .gallery {
-    grid-template-columns: repeat(2, 1fr);
+// --- DELETE CARD ---
+function deleteCard(fileData) {
+  let files = getFiles();
+  files = files.filter(f => f.data !== fileData.data);
+  localStorage.setItem("files", JSON.stringify(files));
+}
+
+// --- PAGINATION ---
+function renderPagination(totalCards) {
+  let totalPages = Math.ceil(totalCards / cardsPerPage);
+  let pagination = document.querySelector(".pagination");
+
+  if (!pagination) {
+    pagination = document.createElement("div");
+    pagination.className = "pagination";
+    document.body.appendChild(pagination);
+  }
+
+  pagination.innerHTML = "";
+
+  if (currentPage > 1) {
+    const prevBtn = document.createElement("button");
+    prevBtn.innerText = "Prev";
+    prevBtn.className = "page-btn";
+    prevBtn.onclick = function() {
+      currentPage--;
+      renderPage();
+    };
+    pagination.appendChild(prevBtn);
+  }
+
+  const pageInfo = document.createElement("span");
+  pageInfo.innerText = ` Page ${currentPage} of ${totalPages} `;
+  pagination.appendChild(pageInfo);
+
+  if (currentPage < totalPages) {
+    const nextBtn = document.createElement("button");
+    nextBtn.innerText = "Next";
+    nextBtn.className = "page-btn";
+    nextBtn.onclick = function() {
+      currentPage++;
+      renderPage();
+    };
+    pagination.appendChild(nextBtn);
   }
 }
