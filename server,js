@@ -7,7 +7,7 @@ const app = express();
 const upload = multer({ dest: "uploads/" });
 
 // GitHub repo config
-const GITHUB_TOKEN = "<YOUR_PERSONAL_ACCESS_TOKEN>";
+const GITHUB_TOKEN = "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";
 const REPO_OWNER = "anthony-roger1234";
 const REPO_NAME = "rashiarchive69";
 const BRANCH = "main"; // your branch
