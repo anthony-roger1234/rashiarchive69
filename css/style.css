@@ -1,14 +1,12 @@
-/* FORCE FULL BLACK BACKGROUND */
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #000000 !important;
+  background-color: #000000;
   color: white;
   font-family: Arial, sans-serif;
   min-height: 100vh;
 }
 
-/* Main Title */
 .main-title {
   font-size: 42px;
   margin-top: 20px;
@@ -16,10 +14,9 @@ html, body {
   text-align: center;
 }
 
-.white { color: #ffffff; }
+.white { color: white; }
 .yellow { color: #ffd700; }
 
-/* Upload Section */
 .upload-section {
   text-align: center;
   margin: 20px 0;
@@ -39,7 +36,7 @@ button {
   border-radius: 4px;
 }
 
-/* 8 Column Grid */
+/* 8 columns */
 .gallery {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -54,6 +51,7 @@ button {
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
   text-align: left;
+  min-height: 160px;
 }
 
 .card-title {
@@ -85,6 +83,14 @@ button {
   font-size: 11px;
   border-radius: 4px;
   border: none;
+}
+
+/* Empty placeholder */
+.empty-card {
+  background: #0a0a0a;
+  border: 1px dashed #222;
+  min-height: 160px;
+  opacity: 0.4;
 }
 
 /* Pagination */
