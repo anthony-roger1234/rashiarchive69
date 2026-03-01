@@ -1,7 +1,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background-color: #000000;
+  background-color: #000;
   color: white;
   font-family: Arial, sans-serif;
   min-height: 100vh;
@@ -36,7 +36,7 @@ button {
   border-radius: 4px;
 }
 
-/* 8 columns */
+/* Responsive grid */
 .gallery {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -76,6 +76,13 @@ button {
   width: 100%;
 }
 
+.delete-btn {
+  background: #555;
+  color: white;
+  margin-top: 4px;
+  width: 100%;
+}
+
 .link-input {
   width: 100%;
   margin-top: 6px;
@@ -104,4 +111,20 @@ button {
   color: black;
   margin: 5px;
   font-weight: bold;
+}
+
+/* --- RESPONSIVE BREAKPOINTS --- */
+
+/* Tablet: 4 columns */
+@media screen and (max-width: 1024px) {
+  .gallery {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile: 2 columns */
+@media screen and (max-width: 600px) {
+  .gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
