@@ -10,10 +10,31 @@ function uploadFile() {
   const fileInput = document.getElementById("fileInput");
   const file = fileInput.files[0];
 
-  if (!file) {
-    alert("Select a file first.");
-    return;
-  }
+  if (!file) return alert("Select a file first.");
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("password", password);
+
+  fetch("/upload", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) return alert(data.error);
+
+      const fileData = {
+        name: file.name.replace(/\.[^/.]+$/, ""),
+        url: data.url,
+        link: ""
+      };
+
+      let files = getFiles();
+      files.push(fileData);
+      localStorage.setItem("files", JSON.stringify(files));
+      renderPage();
+      fileInput.value = "";
+    })
+    .catch(err => alert("Upload failed: " + err.message));
+}
 
   if (password !== correctPassword) {
     alert("Wrong password!");
